@@ -12,8 +12,8 @@ const config = {
     plugins: [
     ],
     devServer: {
-        index: 'my_project.html',
-        openPage: 'my_project.html',
+        index: 'index.html',
+        openPage: 'index.html',
         open: true
     }
 };
