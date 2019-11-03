@@ -43,7 +43,7 @@ function init() {
         show_fps: DEBUG,
         console_verbose: DEBUG,
         autoresize: true,
-        physics_uranium_path: '/node_modules/blend4web/dist/uranium/'
+        physics_uranium_path: '/uranium/'
     });
 }
 
