@@ -16,6 +16,7 @@ var m_physics = b4w.physics;
 var m_constraints = b4w.constraints;
 var m_ctl = b4w.controls;
 var m_objects = b4w.objects;
+var m_transform = b4w.transform;
 
 var ROT_SPEED = 1.5;
 var CAMERA_OFFSET = new Float32Array([0, 10, 3]);
@@ -24,6 +25,8 @@ var _character = null;
 var _character_rig = null;
 var _fake_doors = null;
 var _data_id = null;
+var _suzanne = null;
+var _suzanne_counter = 0;
 
 // detect application mode
 var DEBUG = (m_ver.type() == "DEBUG");
@@ -67,7 +70,7 @@ function init_cb(canvas_elem, success) {
     };
 
     load();
-}
+} 
 
 /**
  * load the scene data
@@ -100,6 +103,7 @@ function load_cb(data_id, success) {
     //m_app.enable_camera_controls();
     _character = m_scenes.get_first_character();
     _character_rig = m_scenes.get_object_by_name('CharacterRig');
+    _suzanne = m_scenes.get_object_by_name('Suzanne');
 
     var camera = m_scenes.get_active_camera();
     m_constraints.append_semi_soft(camera, _character, CAMERA_OFFSET);
@@ -124,6 +128,11 @@ function load_cb(data_id, success) {
     let collision_cb = (obj, manifold_id, pulse) => {
         if (m_ctl.get_sensor_value(obj, manifold_id, 0) == 1) {
             let door = m_ctl.get_sensor_payload(obj,manifold_id, 0).coll_obj;
+            let door_location = m_transform.get_tsr(door);
+            let suzanne = m_objects.copy(_suzanne, 'Suzanne_' + _suzanne_counter, false);
+            _suzanne_counter++;
+            m_scenes.append_object(suzanne);
+            m_transform.set_tsr(suzanne, door_location);
             m_scenes.remove_object(door);
             let selectables = m_objects.get_selectable_objects();
             if (selectables.length === 0) {
@@ -137,11 +146,10 @@ function load_cb(data_id, success) {
                 loadSecondScene();
             }
         }
-        console.log('sd');
         if (m_ctl.get_sensor_value(obj, manifold_id, 2) == 1) {
             console.log('sdfasd');
             m_main.reset();
-        }
+        } 
     };
 
     m_ctl.create_sensor_manifold(_character, 'DOOR_COLISION',m_ctl.CT_CONTINUOUS, 
