@@ -38,5 +38,6 @@ $ npm run webpack
 
 ## Авторы
 Программирование: Артем Беседин github: @speker2010 
+
 Графика: Александр Попков telegram: @alpopjr
 
