@@ -23,17 +23,19 @@ var CAMERA_OFFSET = new Float32Array([0, 10, 3]);
 
 var _character = null;
 var _character_rig = null;
+var _character_collider = null;
 var _fake_doors = null;
 var _data_id = null;
 var _suzanne = null;
 var _suzanne_counter = 0;
+var _current_loader = loadFirstScene;
 
 // detect application mode
 var DEBUG = (m_ver.type() == "DEBUG");
 
 // automatically detect assets path
 var APP_ASSETS_PATH = m_cfg.get_assets_path();
-var FIRST_SCENE = APP_ASSETS_PATH + 'first_scene.json';
+var FIRST_SCENE = APP_ASSETS_PATH + 'first_scene.json'; 
 var SECOND_SCENE = APP_ASSETS_PATH + 'second_scene.json';
 
 /**
@@ -60,8 +62,6 @@ function init_cb(canvas_elem, success) {
         return;
     }
 
-    m_preloader.create_preloader();
-
     // ignore right-click on the canvas element
     canvas_elem.oncontextmenu = function(e) {
         e.preventDefault();
@@ -69,7 +69,7 @@ function init_cb(canvas_elem, success) {
         return false;
     };
 
-    load();
+    _current_loader();
 } 
 
 /**
@@ -103,14 +103,15 @@ function load_cb(data_id, success) {
     //m_app.enable_camera_controls();
     _character = m_scenes.get_first_character();
     _character_rig = m_scenes.get_object_by_name('CharacterRig');
-    _suzanne = m_scenes.get_object_by_name('Suzanne');
+    _character_collider = m_scenes.get_object_by_name('CharacterCollider');
+    //_suzanne = m_scenes.get_object_by_name('Suzanne');
 
     var camera = m_scenes.get_active_camera();
     m_constraints.append_semi_soft(camera, _character, CAMERA_OFFSET);
 
-    let sensor_collision_door = m_ctl.create_collision_sensor(_character, 'DOOR');
-    let sensor_collision_exit = m_ctl.create_collision_sensor(_character, 'EXIT');
-    let sensor_collision_death = m_ctl.create_collision_sensor(_character, 'DEATH');
+    let sensor_collision_door = m_ctl.create_collision_sensor(_character_collider, 'DOOR');
+    let sensor_collision_exit = m_ctl.create_collision_sensor(_character_collider, 'EXIT');
+    let sensor_collision_death = m_ctl.create_collision_sensor(_character_collider, 'DEATH_PLANE');
     let collission_sens_array = [
         sensor_collision_door,
         sensor_collision_exit,
@@ -129,10 +130,10 @@ function load_cb(data_id, success) {
         if (m_ctl.get_sensor_value(obj, manifold_id, 0) == 1) {
             let door = m_ctl.get_sensor_payload(obj,manifold_id, 0).coll_obj;
             let door_location = m_transform.get_tsr(door);
-            let suzanne = m_objects.copy(_suzanne, 'Suzanne_' + _suzanne_counter, false);
-            _suzanne_counter++;
-            m_scenes.append_object(suzanne);
-            m_transform.set_tsr(suzanne, door_location);
+            // let suzanne = m_objects.copy(_suzanne, 'Suzanne_' + _suzanne_counter, false);
+            // _suzanne_counter++;
+            // m_scenes.append_object(suzanne);
+            // m_transform.set_tsr(suzanne, door_location);
             m_scenes.remove_object(door);
             let selectables = m_objects.get_selectable_objects();
             if (selectables.length === 0) {
@@ -143,21 +144,25 @@ function load_cb(data_id, success) {
         if (m_ctl.get_sensor_value(obj, manifold_id, 1) == 1) {
             let selectables = m_objects.get_selectable_objects();
             if (selectables.length === 0) {
-                loadSecondScene();
+                _current_loader = loadSecondScene;
+                m_data.unload(data_id);
+                _current_loader();
             }
         }
+        console.log(1);
         if (m_ctl.get_sensor_value(obj, manifold_id, 2) == 1) {
             console.log('sdfasd');
-            m_main.reset();
+            m_data.unload(data_id);
+            _current_loader();
         } 
     };
 
-    m_ctl.create_sensor_manifold(_character, 'DOOR_COLISION',m_ctl.CT_CONTINUOUS, 
+    m_ctl.create_sensor_manifold(_character_collider, 'DOOR_COLISION',m_ctl.CT_CONTINUOUS, 
         collission_sens_array, colision_door_logic, collision_cb);
 
-    m_ctl.create_sensor_manifold(_character, 'EXIT_COLISION', m_ctl.CT_CONTINUOUS,
+    m_ctl.create_sensor_manifold(_character_collider, 'EXIT_COLISION', m_ctl.CT_CONTINUOUS,
         collission_sens_array, colision_exit_logic, collision_cb);
-    m_ctl.create_sensor_manifold(_character, 'DEATH_COLISION', m_ctl.CT_CONTINUOUS,
+    m_ctl.create_sensor_manifold(_character_collider, 'DEATH_PLANE_COLISION', m_ctl.CT_CONTINUOUS,
         collission_sens_array, colision_death_logic, collision_cb);
 
 
@@ -196,8 +201,12 @@ function disable_doors() {
     }
 }
 
+function loadFirstScene() {
+    m_preloader.create_preloader();
+    load();
+}
+
 function loadSecondScene() {
-    m_data.unload(_data_id);
     m_preloader.create_preloader();
     load2();
 }
