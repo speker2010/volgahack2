@@ -12,6 +12,8 @@ https://speker2010.github.io/volgahack2/
 
 В качестве игрового движка использовался blend4web.
 
+Скелетная анимация из Mixamo.
+
 ## Структура папок
 `/assets`
 
@@ -38,5 +40,6 @@ $ npm run webpack
 
 ## Авторы
 Программирование: Артем Беседин github: @speker2010 
+
 Графика: Александр Попков telegram: @alpopjr
 
